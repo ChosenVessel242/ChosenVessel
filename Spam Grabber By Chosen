@@ -1,0 +1,240 @@
+local Player = game.Players.LocalPlayer
+local Mouse = Player:GetMouse()
+local RunService = game:GetService("RunService")
+local VU = game:GetService("VirtualUser")
+local TweenService = game:GetService("TweenService")
+
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+ScreenGui.Name = "AutoGrabber_V6_Fixed"
+ScreenGui.ResetOnSpawn = false
+
+--- HELPER FUNCTIONS ---
+
+-- Store original sizes to prevent the "Growing Button" bug
+local originalSizes = {}
+
+local function applyGlow(object, color)
+    local glow = Instance.new("UIStroke", object)
+    glow.Thickness = 2
+    glow.Color = color
+    glow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    
+    task.spawn(function()
+        while glow.Parent do
+            local tween = TweenService:Create(glow, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Thickness = 4})
+            tween:Play()
+            break
+        end
+    end)
+end
+
+local function animateClick(button)
+    -- Save the very first size the button has
+    if not originalSizes[button] then
+        originalSizes[button] = button.Size
+    end
+    
+    local baseSize = originalSizes[button]
+    local targetSize = UDim2.new(
+        baseSize.X.Scale, 
+        baseSize.X.Offset + 6, 
+        baseSize.Y.Scale, 
+        baseSize.Y.Offset + 6
+    )
+    
+    -- Create animations based on the STATIC base size
+    local clickAnim = TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = targetSize})
+    local releaseAnim = TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = baseSize})
+    
+    clickAnim:Play()
+    clickAnim.Completed:Connect(function() 
+        releaseAnim:Play() 
+    end)
+end
+
+--- MAIN UI SETUP ---
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 180, 0, 220)
+MainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Active = true
+
+local Corner = Instance.new("UICorner", MainFrame)
+Corner.CornerRadius = UDim.new(0, 8)
+applyGlow(MainFrame, Color3.fromRGB(0, 120, 255))
+
+local TitleBar = Instance.new("TextLabel", MainFrame)
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TitleBar.Text = "  Auto Grabber"
+TitleBar.TextColor3 = Color3.new(1, 1, 1)
+TitleBar.TextXAlignment = Enum.TextXAlignment.Left
+TitleBar.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", TitleBar)
+
+local MinimizeBtn = Instance.new("TextButton", TitleBar)
+MinimizeBtn.Size = UDim2.new(0, 30, 1, 0)
+MinimizeBtn.Position = UDim2.new(1, -30, 0, 0)
+MinimizeBtn.Text = "-"
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MinimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", MinimizeBtn)
+
+local ContentFrame = Instance.new("Frame", MainFrame)
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 1
+
+local Layout = Instance.new("UIListLayout", ContentFrame)
+Layout.Padding = UDim.new(0, 6)
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local ToggleBtn = Instance.new("TextButton", ContentFrame)
+ToggleBtn.Size = UDim2.new(0, 150, 0, 35)
+ToggleBtn.Text = "Status: OFF"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", ToggleBtn)
+
+local AddBtn = Instance.new("TextButton", ContentFrame)
+AddBtn.Size = UDim2.new(0, 150, 0, 30)
+AddBtn.Text = "Add Shortcut +"
+AddBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+AddBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", AddBtn)
+
+local RemoveBtn = Instance.new("TextButton", ContentFrame)
+RemoveBtn.Size = UDim2.new(0, 150, 0, 30)
+RemoveBtn.Text = "Remove Shortcut -"
+RemoveBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+RemoveBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", RemoveBtn)
+
+local SpeedInput = Instance.new("TextBox", ContentFrame)
+SpeedInput.Size = UDim2.new(0, 150, 0, 30)
+SpeedInput.Text = "0.1"
+SpeedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+SpeedInput.TextColor3 = Color3.new(1, 1, 1)
+SpeedInput.ClearTextOnFocus = false
+Instance.new("UICorner", SpeedInput)
+
+--- LOGIC ---
+
+local clicking = false
+local lastValidSpeed = 0.1
+local activeShortcut = nil
+local shortcutRunning = false
+
+local function makeDraggable(gui, isShortcut)
+    local dragging, dragInput, dragStart, startPos, startMousePos
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+            startMousePos = input.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    local moveDist = (input.Position - startMousePos).Magnitude
+                    if moveDist < 5 and isShortcut then
+                        animateClick(gui)
+                        shortcutRunning = not shortcutRunning
+                        if shortcutRunning then clicking = false end
+                        
+                        ToggleBtn.Text = clicking and "Status: ON" or "Status: OFF"
+                        ToggleBtn.BackgroundColor3 = clicking and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(170, 0, 0)
+                        if activeShortcut then
+                            activeShortcut.Text = shortcutRunning and "ON" or "OFF"
+                            activeShortcut.BackgroundColor3 = shortcutRunning and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 50, 50)
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+    RunService.RenderStepped:Connect(function()
+        if dragging and dragInput then
+            local delta = dragInput.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+makeDraggable(MainFrame, false)
+
+task.spawn(function()
+    while true do
+        if clicking or shortcutRunning then
+            local speed = tonumber(SpeedInput.Text) or lastValidSpeed
+            if speed <= 0 then speed = 0.001 end
+            local targetPos = Vector2.new(Mouse.X, Mouse.Y)
+            VU:CaptureController()
+            VU:Button1Down(targetPos)
+            VU:Button1Up(targetPos)
+            if speed < 0.01 then RunService.Heartbeat:Wait() else task.wait(speed) end
+        else
+            task.wait(0.1)
+        end
+    end
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    animateClick(ToggleBtn)
+    clicking = not clicking
+    if clicking then shortcutRunning = false end
+    
+    ToggleBtn.Text = clicking and "Status: ON" or "Status: OFF"
+    ToggleBtn.BackgroundColor3 = clicking and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(170, 0, 0)
+    if activeShortcut then
+        activeShortcut.Text = "OFF"
+        activeShortcut.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end)
+
+AddBtn.MouseButton1Click:Connect(function()
+    animateClick(AddBtn)
+    if activeShortcut then return end
+    activeShortcut = Instance.new("TextButton", ScreenGui)
+    activeShortcut.Size = UDim2.new(0, 55, 0, 55)
+    activeShortcut.Position = UDim2.new(0.5, 0, 0.5, 0)
+    activeShortcut.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    activeShortcut.Text = "OFF"
+    activeShortcut.TextColor3 = Color3.new(1, 1, 1)
+    activeShortcut.Font = Enum.Font.SourceSansBold
+    activeShortcut.ZIndex = 10
+    Instance.new("UICorner", activeShortcut).CornerRadius = UDim.new(1, 0)
+    applyGlow(activeShortcut, Color3.new(1, 1, 1))
+    
+    makeDraggable(activeShortcut, true)
+end)
+
+RemoveBtn.MouseButton1Click:Connect(function()
+    animateClick(RemoveBtn)
+    if activeShortcut then
+        shortcutRunning = false
+        activeShortcut:Destroy()
+        activeShortcut = nil
+    end
+end)
+
+MinimizeBtn.MouseButton1Click:Connect(function()
+    animateClick(MinimizeBtn)
+    local isMinimized = ContentFrame.Visible
+    ContentFrame.Visible = not isMinimized
+    
+    -- We use fixed sizes here instead of calculating from current size
+    local targetSize = isMinimized and UDim2.new(0, 180, 0, 30) or UDim2.new(0, 180, 0, 220)
+    
+    -- Update the stored original size so animateClick doesn't reset it to the wrong size
+    originalSizes[MainFrame] = targetSize
+    
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Size = targetSize}):Play()
+    MinimizeBtn.Text = isMinimized and "+" or "-"
+end)
