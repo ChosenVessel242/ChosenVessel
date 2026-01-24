@@ -1,0 +1,246 @@
+local Player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local VU = game:GetService("VirtualUser") 
+local TweenService = game:GetService("TweenService")
+
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+ScreenGui.Name = "Trigger_ChosenVessel_Studs_V19"
+ScreenGui.ResetOnSpawn = false
+
+--- UI SETUP ---
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 160, 0, 280) 
+MainFrame.Position = UDim2.new(0.5, -80, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50) 
+MainFrame.Active = true
+MainFrame.Draggable = true 
+MainFrame.ClipsDescendants = true
+
+local StudsOverlay = Instance.new("ImageLabel", MainFrame)
+StudsOverlay.Size = UDim2.new(1, 0, 1, 0)
+StudsOverlay.BackgroundTransparency = 1
+StudsOverlay.Image = "rbxassetid://159142015" 
+StudsOverlay.ImageTransparency = 0.8
+StudsOverlay.ScaleType = Enum.ScaleType.Tile
+StudsOverlay.TileSize = UDim2.new(0, 25, 0, 25)
+
+local MainCorner = Instance.new("UICorner", MainFrame)
+MainCorner.CornerRadius = UDim.new(0, 4)
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Color3.fromRGB(150, 150, 150) 
+MainStroke.Thickness = 2
+MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+local StealthBtn = Instance.new("TextButton", ScreenGui)
+StealthBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+StealthBtn.Size = UDim2.new(0, 18, 0, 18)
+StealthBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+StealthBtn.BackgroundTransparency = 0.5
+StealthBtn.Text = ""
+StealthBtn.Visible = false
+StealthBtn.Active = true
+StealthBtn.Draggable = true 
+Instance.new("UICorner", StealthBtn).CornerRadius = UDim.new(1, 0)
+
+--- ANIMATIONS ---
+local pulseInfo = TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+TweenService:Create(MainStroke, pulseInfo, {Thickness = 3.5, Transparency = 0.6}):Play()
+TweenService:Create(StealthBtn, pulseInfo, {BackgroundTransparency = 0.8, Size = UDim2.new(0, 24, 0, 24)}):Play()
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, -30, 0, 30)
+Title.Text = "Trigger By ChosenVessel"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Font = Enum.Font.Code
+Title.TextSize = 11
+Title.ZIndex = 2
+
+local MinBtn = Instance.new("TextButton", MainFrame)
+MinBtn.Size = UDim2.new(0, 25, 0, 25)
+MinBtn.Position = UDim2.new(1, -28, 0, 2.5)
+MinBtn.Text = "-"
+MinBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.Font = Enum.Font.SourceSansBold
+MinBtn.ZIndex = 3
+Instance.new("UICorner", MinBtn)
+
+local ContentFrame = Instance.new("Frame", MainFrame)
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.ZIndex = 2
+
+local ToggleBtn = Instance.new("TextButton", ContentFrame)
+ToggleBtn.Size = UDim2.new(0, 140, 0, 35)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 5)
+ToggleBtn.Text = "OFF"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
+ToggleBtn.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", ToggleBtn)
+
+local ReactionLabel = Instance.new("TextLabel", ContentFrame)
+ReactionLabel.Size = UDim2.new(0, 140, 0, 15)
+ReactionLabel.Position = UDim2.new(0, 10, 0, 45)
+ReactionLabel.Text = "Reaction Delay"
+ReactionLabel.BackgroundTransparency = 1
+ReactionLabel.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+ReactionLabel.TextSize = 10
+
+local ReactionInput = Instance.new("TextBox", ContentFrame)
+ReactionInput.Size = UDim2.new(0, 140, 0, 30)
+ReactionInput.Position = UDim2.new(0, 10, 0, 60)
+ReactionInput.Text = "0.1"
+ReactionInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ReactionInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", ReactionInput)
+
+local LockLabel = Instance.new("TextLabel", ContentFrame)
+LockLabel.Size = UDim2.new(0, 140, 0, 15)
+LockLabel.Position = UDim2.new(0, 10, 0, 95)
+LockLabel.Text = "Grab Cooldown"
+LockLabel.BackgroundTransparency = 1
+LockLabel.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+LockLabel.TextSize = 10
+
+local LockInput = Instance.new("TextBox", ContentFrame)
+LockInput.Size = UDim2.new(0, 140, 0, 30)
+LockInput.Position = UDim2.new(0, 10, 0, 110)
+LockInput.Text = "1.2"
+LockInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+LockInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", LockInput)
+
+-- RANGE SECTION
+local RangeLabel = Instance.new("TextLabel", ContentFrame)
+RangeLabel.Size = UDim2.new(0, 140, 0, 15)
+RangeLabel.Position = UDim2.new(0, 10, 0, 145)
+RangeLabel.Text = "Range Distance"
+RangeLabel.BackgroundTransparency = 1
+RangeLabel.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+RangeLabel.TextSize = 10
+
+local RangeInput = Instance.new("TextBox", ContentFrame)
+RangeInput.Size = UDim2.new(0, 140, 0, 30)
+RangeInput.Position = UDim2.new(0, 10, 0, 160)
+RangeInput.Text = "20"
+RangeInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+RangeInput.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", RangeInput)
+
+local RangeNote = Instance.new("TextLabel", ContentFrame)
+RangeNote.Size = UDim2.new(0, 140, 0, 35) -- Increased height for text wrapping
+RangeNote.Position = UDim2.new(0, 10, 0, 195)
+RangeNote.Text = "Range (30 = Farther Reach) (20 = Non-Gp)"
+RangeNote.BackgroundTransparency = 1
+RangeNote.TextColor3 = Color3.fromRGB(200, 200, 200)
+RangeNote.TextSize = 10
+RangeNote.TextWrapped = true
+RangeNote.Font = Enum.Font.SourceSansItalic
+
+--- LOGIC ---
+local lastClickTime = 0
+local animating = false
+
+MinBtn.MouseButton1Click:Connect(function()
+    local currentTime = tick()
+    if currentTime - lastClickTime < 0.35 then
+        MainFrame.Visible = false
+        StealthBtn.Position = UDim2.new(0, MainFrame.AbsolutePosition.X + 145, 0, MainFrame.AbsolutePosition.Y + 15)
+        StealthBtn.Visible = true
+    else
+        task.delay(0.36, function()
+            if tick() - lastClickTime >= 0.35 and not animating then
+                animating = true
+                if MainFrame.Size.Y.Offset > 50 then
+                    ContentFrame.Visible = false
+                    MainFrame:TweenSize(UDim2.new(0, 160, 0, 30), "Out", "Quart", 0.3, true, function()
+                        animating = false
+                        MinBtn.Text = "+"
+                    end)
+                else
+                    MinBtn.Text = "-"
+                    MainFrame:TweenSize(UDim2.new(0, 160, 0, 290), "Out", "Back", 0.4, true, function()
+                        MainFrame:TweenSize(UDim2.new(0, 160, 0, 280), "Out", "Quart", 0.1, true)
+                        ContentFrame.Visible = true
+                        animating = false
+                    end)
+                end
+            end
+        end)
+    end
+    lastClickTime = currentTime
+end)
+
+local dragStartPos = nil
+StealthBtn.MouseButton1Down:Connect(function() dragStartPos = StealthBtn.AbsolutePosition end)
+StealthBtn.MouseButton1Up:Connect(function()
+    if dragStartPos and (dragStartPos - StealthBtn.AbsolutePosition).Magnitude < 5 then
+        StealthBtn.Visible = false
+        MainFrame.Visible = true
+    end
+end)
+
+--- ENGINE ---
+local active = false
+local canGrab = true
+local targetDetectedTime = 0
+
+local function isLivingTarget()
+    local center = Camera.ViewportSize / 2
+    local ray = Camera:ViewportPointToRay(center.X, center.Y)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {Player.Character}
+    
+    local customRange = tonumber(RangeInput.Text) or 20
+    local result = workspace:Raycast(ray.Origin, ray.Direction * customRange, params)
+    
+    if result and result.Instance then
+        local model = result.Instance:FindFirstAncestorOfClass("Model")
+        return model and model:FindFirstChildOfClass("Humanoid")
+    end
+    return false
+end
+
+local function performGrab()
+    local tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
+    if tool then tool:Activate() end
+    local center = Camera.ViewportSize / 2
+    VU:CaptureController()
+    VU:Button1Down(center)
+    task.wait(0.05)
+    VU:Button1Up(center)
+end
+
+task.spawn(function()
+    while true do
+        if active and canGrab then
+            if isLivingTarget() then
+                if targetDetectedTime == 0 then targetDetectedTime = tick() end
+                if (tick() - targetDetectedTime) >= (tonumber(ReactionInput.Text) or 0.1) then
+                    canGrab = false 
+                    performGrab()
+                    task.wait(tonumber(LockInput.Text) or 1.2)
+                    canGrab = true
+                    targetDetectedTime = 0
+                end
+            else
+                targetDetectedTime = 0
+            end
+        end
+        RunService.Heartbeat:Wait()
+    end
+end)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    active = not active
+    canGrab = true
+    targetDetectedTime = 0
+    ToggleBtn.Text = active and "ON" or "OFF"
+    ToggleBtn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(150, 0, 0)
+end)
