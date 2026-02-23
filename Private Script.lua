@@ -129,57 +129,62 @@ InputStroke.Thickness = 1.5
 InputStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 -- ── How masking works ─────────────────────────────────────────────────────────
--- TextBox: TextTransparency=1 hides the actual letters but the CURSOR still
--- renders (it is drawn separately by Roblox and ignores TextTransparency).
--- We NEVER write back to TextBox.Text programmatically, only read it via
--- Heartbeat, so there is zero re-entry / 1-letter bug.
--- DisplayLabel sits BELOW the TextBox (lower ZIndex) and shows bullets or
--- plain text. Both share the exact same Size, Position, Font, TextSize,
--- and TextXAlignment so the cursor sits right after the last rendered char.
+-- TextBox is 1×1 px hidden in the corner — it captures keyboard input and
+-- nothing else. We never rely on its cursor at all.
+-- DisplayLabel renders the text (bullets or plain) plus a blinking "|" we
+-- append ourselves. Since the cursor is always at the END of our own label,
+-- it is always perfectly aligned regardless of font, character count, or
+-- bullet width. No drift, ever.
 
--- DisplayLabel (behind the TextBox, shows bullets or real text)
--- Must share IDENTICAL Font, TextSize, Position, Size with PasswordBox
--- so the cursor (which follows invisible real text) lines up with displayed chars.
--- We use Code (monospace) so every glyph — including • — has the same advance width.
+-- Invisible 1×1 TextBox — keyboard only, no visible cursor
+local PasswordBox = Instance.new("TextBox", InputBG)
+PasswordBox.Size = UDim2.new(0, 1, 0, 1)
+PasswordBox.Position = UDim2.new(0, 0, 1, -1)  -- bottom-left corner, out of sight
+PasswordBox.BackgroundTransparency = 1
+PasswordBox.Text = ""
+PasswordBox.TextTransparency = 1
+PasswordBox.PlaceholderText = ""
+PasswordBox.TextSize = 1
+PasswordBox.Font = Enum.Font.Gotham
+PasswordBox.ClearTextOnFocus = false
+PasswordBox.ZIndex = 1
+
+-- Tap area: makes the whole input box focusable on mobile
+local InputTapArea = Instance.new("TextButton", InputBG)
+InputTapArea.Size = UDim2.new(1, -46, 1, 0)
+InputTapArea.Position = UDim2.new(0, 0, 0, 0)
+InputTapArea.BackgroundTransparency = 1
+InputTapArea.Text = ""
+InputTapArea.ZIndex = 7
+InputTapArea.MouseButton1Click:Connect(function()
+    PasswordBox:CaptureFocus()
+end)
+
+-- DisplayLabel — shows bullets or plain text + blinking cursor at end
 local DisplayLabel = Instance.new("TextLabel", InputBG)
 DisplayLabel.Size = UDim2.new(1, -50, 1, 0)
-DisplayLabel.Position = UDim2.new(0, 12, 0, 0)
+DisplayLabel.Position = UDim2.new(0, 14, 0, 0)
 DisplayLabel.BackgroundTransparency = 1
 DisplayLabel.Text = ""
 DisplayLabel.TextColor3 = Color3.fromRGB(210, 200, 255)
 DisplayLabel.TextSize = 15
-DisplayLabel.Font = Enum.Font.Code   -- monospace: • width == any char width
+DisplayLabel.Font = Enum.Font.Gotham
 DisplayLabel.TextXAlignment = Enum.TextXAlignment.Left
-DisplayLabel.ZIndex = 4  -- below TextBox
+DisplayLabel.ZIndex = 5
 
--- Placeholder (shown when empty, also behind TextBox)
+-- Placeholder
 local PlaceholderLabel = Instance.new("TextLabel", InputBG)
 PlaceholderLabel.Size = UDim2.new(1, -50, 1, 0)
-PlaceholderLabel.Position = UDim2.new(0, 12, 0, 0)
+PlaceholderLabel.Position = UDim2.new(0, 14, 0, 0)
 PlaceholderLabel.BackgroundTransparency = 1
-PlaceholderLabel.Text = "Type password..."
+PlaceholderLabel.Text = "Tap to type..."
 PlaceholderLabel.TextColor3 = Color3.fromRGB(90, 75, 130)
 PlaceholderLabel.TextSize = 15
-PlaceholderLabel.Font = Enum.Font.Code
+PlaceholderLabel.Font = Enum.Font.Gotham
 PlaceholderLabel.TextXAlignment = Enum.TextXAlignment.Left
-PlaceholderLabel.ZIndex = 4
+PlaceholderLabel.ZIndex = 5
 
--- TextBox (on top — captures all input, text invisible, cursor visible)
--- MUST be identical Font/TextSize/Position/Size/Alignment to DisplayLabel
-local PasswordBox = Instance.new("TextBox", InputBG)
-PasswordBox.Size = UDim2.new(1, -50, 1, 0)
-PasswordBox.Position = UDim2.new(0, 12, 0, 0)
-PasswordBox.BackgroundTransparency = 1
-PasswordBox.Text = ""
-PasswordBox.TextTransparency = 1   -- hides letters; cursor still renders
-PasswordBox.PlaceholderText = ""   -- we use PlaceholderLabel instead
-PasswordBox.TextSize = 15
-PasswordBox.Font = Enum.Font.Code  -- must match DisplayLabel exactly
-PasswordBox.TextXAlignment = Enum.TextXAlignment.Left
-PasswordBox.ClearTextOnFocus = false
-PasswordBox.ZIndex = 6             -- above DisplayLabel so it gets all input
-
--- Eye toggle — ZIndex 8 so tapping it hits the button, not the TextBox
+-- Eye toggle
 local EyeBtn = Instance.new("TextButton", InputBG)
 EyeBtn.Size = UDim2.new(0, 36, 0, 36)
 EyeBtn.Position = UDim2.new(1, -42, 0.5, -18)
@@ -189,31 +194,51 @@ EyeBtn.TextSize = 20
 EyeBtn.Font = Enum.Font.GothamBold
 EyeBtn.ZIndex = 8
 
--- ── Masking — pure Heartbeat read, never writes to PasswordBox.Text ───────────
+-- ── Blinking cursor + masking ─────────────────────────────────────────────────
 local isHidden = true
 local lastSeen = ""
+local isFocused = false
+local cursorOn = true  -- blink state
+
+-- Blink every 0.5 s
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        cursorOn = not cursorOn
+    end
+end)
+
+local function refreshDisplay()
+    local cur = PasswordBox.Text
+    local empty = (#cur == 0)
+    PlaceholderLabel.Visible = empty and not isFocused
+    local body = empty and "" or (isHidden and string.rep("•", #cur) or cur)
+    -- Append blinking cursor when focused
+    DisplayLabel.Text = isFocused and (body .. (cursorOn and "|" or " ")) or body
+end
 
 RunService.Heartbeat:Connect(function()
     local cur = PasswordBox.Text
-    if cur == lastSeen then return end
-    lastSeen = cur
-    local empty = (#cur == 0)
-    PlaceholderLabel.Visible = empty
-    DisplayLabel.Text = (not empty) and (isHidden and string.rep("•", #cur) or cur) or ""
+    if cur ~= lastSeen then
+        lastSeen = cur
+    end
+    refreshDisplay()
 end)
 
 EyeBtn.MouseButton1Click:Connect(function()
     isHidden = not isHidden
     EyeBtn.Text = isHidden and "👁" or "🙈"
-    local cur = PasswordBox.Text
-    DisplayLabel.Text = isHidden and string.rep("•", #cur) or cur
+    refreshDisplay()
 end)
 
 PasswordBox.Focused:Connect(function()
+    isFocused = true
     TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(150, 90, 255)}):Play()
 end)
 PasswordBox.FocusLost:Connect(function()
+    isFocused = false
     TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(75, 55, 135)}):Play()
+    refreshDisplay()
 end)
 
 -- ── Status label ──────────────────────────────────────────────────────────────
