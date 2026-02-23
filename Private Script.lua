@@ -138,6 +138,9 @@ InputStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 -- and TextXAlignment so the cursor sits right after the last rendered char.
 
 -- DisplayLabel (behind the TextBox, shows bullets or real text)
+-- Must share IDENTICAL Font, TextSize, Position, Size with PasswordBox
+-- so the cursor (which follows invisible real text) lines up with displayed chars.
+-- We use Code (monospace) so every glyph — including • — has the same advance width.
 local DisplayLabel = Instance.new("TextLabel", InputBG)
 DisplayLabel.Size = UDim2.new(1, -50, 1, 0)
 DisplayLabel.Position = UDim2.new(0, 12, 0, 0)
@@ -145,7 +148,7 @@ DisplayLabel.BackgroundTransparency = 1
 DisplayLabel.Text = ""
 DisplayLabel.TextColor3 = Color3.fromRGB(210, 200, 255)
 DisplayLabel.TextSize = 15
-DisplayLabel.Font = Enum.Font.Gotham
+DisplayLabel.Font = Enum.Font.Code   -- monospace: • width == any char width
 DisplayLabel.TextXAlignment = Enum.TextXAlignment.Left
 DisplayLabel.ZIndex = 4  -- below TextBox
 
@@ -157,12 +160,12 @@ PlaceholderLabel.BackgroundTransparency = 1
 PlaceholderLabel.Text = "Type password..."
 PlaceholderLabel.TextColor3 = Color3.fromRGB(90, 75, 130)
 PlaceholderLabel.TextSize = 15
-PlaceholderLabel.Font = Enum.Font.Gotham
+PlaceholderLabel.Font = Enum.Font.Code
 PlaceholderLabel.TextXAlignment = Enum.TextXAlignment.Left
 PlaceholderLabel.ZIndex = 4
 
 -- TextBox (on top — captures all input, text invisible, cursor visible)
--- IDENTICAL Size/Position/Font/TextSize/Alignment to DisplayLabel so cursor aligns
+-- MUST be identical Font/TextSize/Position/Size/Alignment to DisplayLabel
 local PasswordBox = Instance.new("TextBox", InputBG)
 PasswordBox.Size = UDim2.new(1, -50, 1, 0)
 PasswordBox.Position = UDim2.new(0, 12, 0, 0)
@@ -171,7 +174,7 @@ PasswordBox.Text = ""
 PasswordBox.TextTransparency = 1   -- hides letters; cursor still renders
 PasswordBox.PlaceholderText = ""   -- we use PlaceholderLabel instead
 PasswordBox.TextSize = 15
-PasswordBox.Font = Enum.Font.Gotham
+PasswordBox.Font = Enum.Font.Code  -- must match DisplayLabel exactly
 PasswordBox.TextXAlignment = Enum.TextXAlignment.Left
 PasswordBox.ClearTextOnFocus = false
 PasswordBox.ZIndex = 6             -- above DisplayLabel so it gets all input
