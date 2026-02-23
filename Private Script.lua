@@ -1,5 +1,5 @@
 -- ╔══════════════════════════════════════╗
--- ║   PASSWORD GATE — ChosenVessel V19   ║
+-- ║       Private Script — CV V19        ║
 -- ╚══════════════════════════════════════╝
 
 local Player = game.Players.LocalPlayer
@@ -9,25 +9,24 @@ local Lighting = game:GetService("Lighting")
 
 local CORRECT_PASSWORD = "Chosen X Antarctica"
 
--- ── Blur Effect (replaces black overlay) ─────────────────────────────────────
+-- ── Blur backdrop ─────────────────────────────────────────────────────────────
 local BlurEffect = Instance.new("BlurEffect", Lighting)
 BlurEffect.Size = 20
 
--- ── Password Screen ───────────────────────────────────────────────────────────
+-- ── ScreenGui ─────────────────────────────────────────────────────────────────
 local PasswordGui = Instance.new("ScreenGui", Player.PlayerGui)
 PasswordGui.Name = "CV_PasswordGate"
 PasswordGui.ResetOnSpawn = false
 PasswordGui.DisplayOrder = 999
 PasswordGui.IgnoreGuiInset = true
 
--- Very light tint (not a solid overlay)
 local Tint = Instance.new("Frame", PasswordGui)
 Tint.Size = UDim2.new(1, 0, 1, 0)
 Tint.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Tint.BackgroundTransparency = 0.6
 Tint.BorderSizePixel = 0
 
--- Card (centered, AnchorPoint so position math is clean)
+-- ── Card ──────────────────────────────────────────────────────────────────────
 local Card = Instance.new("Frame", PasswordGui)
 Card.AnchorPoint = Vector2.new(0.5, 0.5)
 Card.Size = UDim2.new(0, 300, 0, 355)
@@ -35,7 +34,6 @@ Card.Position = UDim2.new(0.5, 0, 0.5, 0)
 Card.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
 Card.BorderSizePixel = 0
 Card.ZIndex = 2
-
 Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 16)
 
 local CardStroke = Instance.new("UIStroke", Card)
@@ -43,7 +41,7 @@ CardStroke.Color = Color3.fromRGB(100, 65, 200)
 CardStroke.Thickness = 1.5
 CardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- ── X button (top-right, permanently closes without unlocking) ────────────────
+-- ── X button ──────────────────────────────────────────────────────────────────
 local XBtn = Instance.new("TextButton", Card)
 XBtn.Size = UDim2.new(0, 28, 0, 28)
 XBtn.Position = UDim2.new(1, -36, 0, 10)
@@ -55,7 +53,6 @@ XBtn.BackgroundColor3 = Color3.fromRGB(40, 35, 55)
 XBtn.BorderSizePixel = 0
 XBtn.ZIndex = 10
 Instance.new("UICorner", XBtn).CornerRadius = UDim.new(0, 8)
-
 XBtn.MouseEnter:Connect(function()
     TweenService:Create(XBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180, 40, 40)}):Play()
 end)
@@ -63,7 +60,7 @@ XBtn.MouseLeave:Connect(function()
     TweenService:Create(XBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(40, 35, 55)}):Play()
 end)
 
--- Lock emoji
+-- ── Lock icon ─────────────────────────────────────────────────────────────────
 local LockIcon = Instance.new("TextLabel", Card)
 LockIcon.Size = UDim2.new(0, 42, 0, 42)
 LockIcon.Position = UDim2.new(0.5, -21, 0, 22)
@@ -73,17 +70,19 @@ LockIcon.TextSize = 32
 LockIcon.Font = Enum.Font.GothamBold
 LockIcon.ZIndex = 3
 
+-- ── Title ─────────────────────────────────────────────────────────────────────
 local TitleLabel = Instance.new("TextLabel", Card)
 TitleLabel.Size = UDim2.new(1, -24, 0, 28)
 TitleLabel.Position = UDim2.new(0, 12, 0, 74)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "ChosenVessel V19"
+TitleLabel.Text = "Private Script"
 TitleLabel.TextColor3 = Color3.fromRGB(240, 235, 255)
 TitleLabel.TextSize = 20
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
 TitleLabel.ZIndex = 3
 
+-- ── Subtitle ──────────────────────────────────────────────────────────────────
 local SubLabel = Instance.new("TextLabel", Card)
 SubLabel.Size = UDim2.new(1, -24, 0, 20)
 SubLabel.Position = UDim2.new(0, 12, 0, 104)
@@ -95,6 +94,7 @@ SubLabel.Font = Enum.Font.Gotham
 SubLabel.TextXAlignment = Enum.TextXAlignment.Center
 SubLabel.ZIndex = 3
 
+-- ── Divider ───────────────────────────────────────────────────────────────────
 local Divider = Instance.new("Frame", Card)
 Divider.Size = UDim2.new(0, 240, 0, 1)
 Divider.Position = UDim2.new(0.5, -120, 0, 134)
@@ -102,6 +102,7 @@ Divider.BackgroundColor3 = Color3.fromRGB(60, 45, 100)
 Divider.BorderSizePixel = 0
 Divider.ZIndex = 3
 
+-- ── "PASSWORD" label ──────────────────────────────────────────────────────────
 local FieldLabel = Instance.new("TextLabel", Card)
 FieldLabel.Size = UDim2.new(0, 256, 0, 18)
 FieldLabel.Position = UDim2.new(0.5, -128, 0, 148)
@@ -113,7 +114,7 @@ FieldLabel.Font = Enum.Font.GothamBold
 FieldLabel.TextXAlignment = Enum.TextXAlignment.Left
 FieldLabel.ZIndex = 3
 
--- ── Input field ───────────────────────────────────────────────────────────────
+-- ── Input box ─────────────────────────────────────────────────────────────────
 local InputBG = Instance.new("Frame", Card)
 InputBG.Size = UDim2.new(0, 256, 0, 44)
 InputBG.Position = UDim2.new(0.5, -128, 0, 168)
@@ -127,46 +128,55 @@ InputStroke.Color = Color3.fromRGB(75, 55, 135)
 InputStroke.Thickness = 1.5
 InputStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
--- THE FIX: TextBox holds the real text but is INVISIBLE.
--- We render a separate TextLabel overlay with masked/plain text.
--- This avoids the 1-letter bug caused by writing back to .Text inside a change signal.
-local PasswordBox = Instance.new("TextBox", InputBG)
-PasswordBox.Size = UDim2.new(1, -50, 1, 0)
-PasswordBox.Position = UDim2.new(0, 12, 0, 0)
-PasswordBox.BackgroundTransparency = 1
-PasswordBox.Text = ""
-PasswordBox.TextTransparency = 1  -- text invisible; we use DisplayLabel instead
-PasswordBox.PlaceholderText = ""
-PasswordBox.TextSize = 15
-PasswordBox.Font = Enum.Font.Gotham
-PasswordBox.ClearTextOnFocus = false
-PasswordBox.ZIndex = 6  -- highest so it captures all input events
+-- ── How masking works ─────────────────────────────────────────────────────────
+-- TextBox: TextTransparency=1 hides the actual letters but the CURSOR still
+-- renders (it is drawn separately by Roblox and ignores TextTransparency).
+-- We NEVER write back to TextBox.Text programmatically, only read it via
+-- Heartbeat, so there is zero re-entry / 1-letter bug.
+-- DisplayLabel sits BELOW the TextBox (lower ZIndex) and shows bullets or
+-- plain text. Both share the exact same Size, Position, Font, TextSize,
+-- and TextXAlignment so the cursor sits right after the last rendered char.
 
--- Display label (renders masked or plaintext)
+-- DisplayLabel (behind the TextBox, shows bullets or real text)
 local DisplayLabel = Instance.new("TextLabel", InputBG)
 DisplayLabel.Size = UDim2.new(1, -50, 1, 0)
 DisplayLabel.Position = UDim2.new(0, 12, 0, 0)
 DisplayLabel.BackgroundTransparency = 1
 DisplayLabel.Text = ""
 DisplayLabel.TextColor3 = Color3.fromRGB(210, 200, 255)
-DisplayLabel.TextSize = 16
+DisplayLabel.TextSize = 15
 DisplayLabel.Font = Enum.Font.Gotham
 DisplayLabel.TextXAlignment = Enum.TextXAlignment.Left
-DisplayLabel.ZIndex = 4
+DisplayLabel.ZIndex = 4  -- below TextBox
 
--- Placeholder (shown when empty)
+-- Placeholder (shown when empty, also behind TextBox)
 local PlaceholderLabel = Instance.new("TextLabel", InputBG)
 PlaceholderLabel.Size = UDim2.new(1, -50, 1, 0)
 PlaceholderLabel.Position = UDim2.new(0, 12, 0, 0)
 PlaceholderLabel.BackgroundTransparency = 1
 PlaceholderLabel.Text = "Type password..."
 PlaceholderLabel.TextColor3 = Color3.fromRGB(90, 75, 130)
-PlaceholderLabel.TextSize = 14
+PlaceholderLabel.TextSize = 15
 PlaceholderLabel.Font = Enum.Font.Gotham
 PlaceholderLabel.TextXAlignment = Enum.TextXAlignment.Left
 PlaceholderLabel.ZIndex = 4
 
--- Eye toggle — ZIndex above TextBox so tap hits button not textbox
+-- TextBox (on top — captures all input, text invisible, cursor visible)
+-- IDENTICAL Size/Position/Font/TextSize/Alignment to DisplayLabel so cursor aligns
+local PasswordBox = Instance.new("TextBox", InputBG)
+PasswordBox.Size = UDim2.new(1, -50, 1, 0)
+PasswordBox.Position = UDim2.new(0, 12, 0, 0)
+PasswordBox.BackgroundTransparency = 1
+PasswordBox.Text = ""
+PasswordBox.TextTransparency = 1   -- hides letters; cursor still renders
+PasswordBox.PlaceholderText = ""   -- we use PlaceholderLabel instead
+PasswordBox.TextSize = 15
+PasswordBox.Font = Enum.Font.Gotham
+PasswordBox.TextXAlignment = Enum.TextXAlignment.Left
+PasswordBox.ClearTextOnFocus = false
+PasswordBox.ZIndex = 6             -- above DisplayLabel so it gets all input
+
+-- Eye toggle — ZIndex 8 so tapping it hits the button, not the TextBox
 local EyeBtn = Instance.new("TextButton", InputBG)
 EyeBtn.Size = UDim2.new(0, 36, 0, 36)
 EyeBtn.Position = UDim2.new(1, -42, 0.5, -18)
@@ -174,9 +184,9 @@ EyeBtn.BackgroundTransparency = 1
 EyeBtn.Text = "👁"
 EyeBtn.TextSize = 20
 EyeBtn.Font = Enum.Font.GothamBold
-EyeBtn.ZIndex = 8  -- above PasswordBox so it wins the tap
+EyeBtn.ZIndex = 8
 
--- ── Masking logic (Heartbeat poll — no re-entry, works on mobile) ─────────────
+-- ── Masking — pure Heartbeat read, never writes to PasswordBox.Text ───────────
 local isHidden = true
 local lastSeen = ""
 
@@ -184,8 +194,9 @@ RunService.Heartbeat:Connect(function()
     local cur = PasswordBox.Text
     if cur == lastSeen then return end
     lastSeen = cur
-    PlaceholderLabel.Visible = (#cur == 0)
-    DisplayLabel.Text = isHidden and string.rep("•", #cur) or cur
+    local empty = (#cur == 0)
+    PlaceholderLabel.Visible = empty
+    DisplayLabel.Text = (not empty) and (isHidden and string.rep("•", #cur) or cur) or ""
 end)
 
 EyeBtn.MouseButton1Click:Connect(function()
@@ -195,7 +206,6 @@ EyeBtn.MouseButton1Click:Connect(function()
     DisplayLabel.Text = isHidden and string.rep("•", #cur) or cur
 end)
 
--- Focus highlight
 PasswordBox.Focused:Connect(function()
     TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(150, 90, 255)}):Play()
 end)
@@ -203,9 +213,9 @@ PasswordBox.FocusLost:Connect(function()
     TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(75, 55, 135)}):Play()
 end)
 
--- Status
+-- ── Status label ──────────────────────────────────────────────────────────────
 local StatusLabel = Instance.new("TextLabel", Card)
-StatusLabel.Size = UDim2.new(0, 256, 0, 20)
+StatusLabel.Size = UDim2.new(0, 256, 0, 18)
 StatusLabel.Position = UDim2.new(0.5, -128, 0, 220)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = ""
@@ -215,7 +225,7 @@ StatusLabel.Font = Enum.Font.GothamBold
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Center
 StatusLabel.ZIndex = 3
 
--- Submit button
+-- ── Submit button ─────────────────────────────────────────────────────────────
 local SubmitBtn = Instance.new("TextButton", Card)
 SubmitBtn.Size = UDim2.new(0, 256, 0, 44)
 SubmitBtn.Position = UDim2.new(0.5, -128, 0, 248)
@@ -226,24 +236,12 @@ SubmitBtn.TextSize = 14
 SubmitBtn.Font = Enum.Font.GothamBold
 SubmitBtn.ZIndex = 3
 Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 10)
-
 SubmitBtn.MouseEnter:Connect(function()
     TweenService:Create(SubmitBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(125, 75, 240)}):Play()
 end)
 SubmitBtn.MouseLeave:Connect(function()
     TweenService:Create(SubmitBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(95, 50, 195)}):Play()
 end)
-
-local CreditLabel = Instance.new("TextLabel", Card)
-CreditLabel.Size = UDim2.new(1, 0, 0, 20)
-CreditLabel.Position = UDim2.new(0, 0, 1, -26)
-CreditLabel.BackgroundTransparency = 1
-CreditLabel.Text = "by ChosenVessel • private build"
-CreditLabel.TextColor3 = Color3.fromRGB(65, 55, 95)
-CreditLabel.TextSize = 10
-CreditLabel.Font = Enum.Font.Gotham
-CreditLabel.TextXAlignment = Enum.TextXAlignment.Center
-CreditLabel.ZIndex = 3
 
 -- ── Card shake ────────────────────────────────────────────────────────────────
 local function shakeCard()
@@ -261,13 +259,13 @@ local function shakeCard()
     end)
 end
 
--- ── Destroy everything ────────────────────────────────────────────────────────
+-- ── Destroy password screen ───────────────────────────────────────────────────
 local function destroyPasswordScreen()
     BlurEffect:Destroy()
     PasswordGui:Destroy()
 end
 
--- ── X button: close permanently without unlocking ────────────────────────────
+-- ── X: permanently close without running script ───────────────────────────────
 XBtn.MouseButton1Click:Connect(function()
     TweenService:Create(Card, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
         Size = UDim2.new(0, 0, 0, 0),
@@ -299,7 +297,6 @@ local function onUnlock()
     }):Play()
     TweenService:Create(Tint, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
     TweenService:Create(BlurEffect, TweenInfo.new(0.5), {Size = 0}):Play()
-
     task.wait(0.55)
     destroyPasswordScreen()
 
@@ -366,6 +363,7 @@ local function onUnlock()
         ShakeNotification.BorderSizePixel = 0
         ShakeNotification.Visible = false
         Instance.new("UICorner", ShakeNotification).CornerRadius = UDim.new(0, 10)
+
         local NotificationStroke = Instance.new("UIStroke", ShakeNotification)
         NotificationStroke.Color = Color3.fromRGB(128, 128, 128)
         NotificationStroke.Thickness = 2
@@ -454,18 +452,14 @@ local function onUnlock()
 
         local function makeLabel(parent, pos, text)
             local l = Instance.new("TextLabel", parent)
-            l.Size = UDim2.new(0, 180, 0, 15); l.Position = pos
-            l.Text = text; l.BackgroundTransparency = 1
-            l.TextColor3 = Color3.new(0.9,0.9,0.9); l.TextSize = 10
-            return l
+            l.Size = UDim2.new(0,180,0,15); l.Position = pos; l.Text = text
+            l.BackgroundTransparency = 1; l.TextColor3 = Color3.new(0.9,0.9,0.9); l.TextSize = 10
         end
         local function makeInput(parent, pos, default)
             local b = Instance.new("TextBox", parent)
-            b.Size = UDim2.new(0, 180, 0, 30); b.Position = pos
-            b.Text = default; b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            b.TextColor3 = Color3.new(1,1,1)
-            Instance.new("UICorner", b)
-            return b
+            b.Size = UDim2.new(0,180,0,30); b.Position = pos; b.Text = default
+            b.BackgroundColor3 = Color3.fromRGB(40,40,40); b.TextColor3 = Color3.new(1,1,1)
+            Instance.new("UICorner", b); return b
         end
 
         makeLabel(ContentFrame, UDim2.new(0,10,0,85), "Reaction Delay")
@@ -486,14 +480,12 @@ local function onUnlock()
             local lastAcceleration = Vector3.new(0,0,0)
             Connections.ShakeDetection = UserInputService.DeviceAccelerationChanged:Connect(function(acceleration)
                 if not MainFrame.Visible then
-                    local currentAccel = acceleration.Position
-                    local currentTime = tick()
-                    local delta = (currentAccel - lastAcceleration).Magnitude
-                    if delta > 15 and (currentTime - lastShakeTime) > 1 then
-                        MainFrame.Visible = true
-                        lastShakeTime = currentTime
+                    local cur = acceleration.Position
+                    local now = tick()
+                    if (cur - lastAcceleration).Magnitude > 15 and (now - lastShakeTime) > 1 then
+                        MainFrame.Visible = true; lastShakeTime = now
                     end
-                    lastAcceleration = currentAccel
+                    lastAcceleration = cur
                 end
             end)
         end
@@ -520,10 +512,8 @@ local function onUnlock()
         end
 
         local function performGrab()
-            local char = Player.Character
-            if not char then return end
-            local tool = char:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
+            local char = Player.Character; if not char then return end
+            local tool = char:FindFirstChildOfClass("Tool"); if tool then tool:Activate() end
             local center = Camera.ViewportSize / 2
             VU:CaptureController(); VU:Button1Down(center); task.wait(0.01); VU:Button1Up(center)
         end
@@ -551,8 +541,7 @@ local function onUnlock()
                     if (tick() - targetDetectedTime) >= (tonumber(ReactionInput.Text) or 0.1) then
                         canGrab = false; performGrab()
                         local dt = task.delay(tonumber(LockInput.Text) or 1.2, function() canGrab = true end)
-                        table.insert(ActiveDelays, dt)
-                        targetDetectedTime = 0
+                        table.insert(ActiveDelays, dt); targetDetectedTime = 0
                     end
                 else
                     targetDetectedTime = 0
@@ -614,17 +603,25 @@ local function tryPassword()
         task.delay(0.45, function()
             TweenService:Create(InputBG, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(28, 26, 42)}):Play()
         end)
-        StatusLabel.Text = attempts >= 3
-            and ("❌ Wrong password (" .. attempts .. " attempts)")
-            or "❌ Incorrect password"
-        task.delay(2.5, function()
-            if StatusLabel and StatusLabel.Parent then StatusLabel.Text = "" end
-        end)
-        -- Clear the textbox and reset tracking
-        PasswordBox.Text = ""
-        lastSeen = ""
-        DisplayLabel.Text = ""
-        PlaceholderLabel.Visible = true
+        if attempts >= 3 then
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+            StatusLabel.Text = "❌ Too many attempts. Kicking..."
+            SubmitBtn.Active = false
+            TweenService:Create(CardStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 40, 40)}):Play()
+            task.delay(1.5, function()
+                Player:Kick("❌ Too many failed password attempts.")
+            end)
+        else
+            StatusLabel.Text = "❌ Incorrect password (" .. attempts .. "/3)"
+            task.delay(2.5, function()
+                if StatusLabel and StatusLabel.Parent then StatusLabel.Text = "" end
+            end)
+            -- Only clear PasswordBox on wrong password — never write to it during normal typing
+            PasswordBox.Text = ""
+            lastSeen = ""
+            DisplayLabel.Text = ""
+            PlaceholderLabel.Visible = true
+        end
     end
 end
 
